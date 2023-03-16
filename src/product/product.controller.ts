@@ -5,7 +5,7 @@ import { ProductService } from './product.service';
 
 @Controller('product')
 export class ProductController {
-  constructor(private readonly appService: ProductService) {}
+  constructor(private readonly productService: ProductService) {}
 
   @Get()
   async productList(
@@ -14,7 +14,7 @@ export class ProductController {
   ): Promise<any> {
     // console.log(dto);
 
-    const products = await this.appService.productList(dto);
+    const products = await this.productService.productList(dto);
     // console.log(products);
 
     const isProductExist = products.length > 0;
@@ -26,7 +26,7 @@ export class ProductController {
     }
     // console.log(isProductExist);
 
-    const count = await this.appService.count();
+    const count = await this.productService.count();
 
     const paginationIndex = {
       totalFindings: count.length,
