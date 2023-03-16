@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { pool } from '../../db';
+import { pool } from '../db';
 import { ProductListDto } from './dto';
 
 async function queryDB(query, param) {
