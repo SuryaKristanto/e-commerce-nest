@@ -56,4 +56,21 @@ export class ProductService {
       [dto.name, dto.price, dto.weight, dto.qty],
     );
   }
+
+  async deleteProduct(code: number): Promise<any> {
+    const findProduct = (await queryDB(
+      `SELECT name FROM products WHERE code = ? AND deleted_at IS NULL`,
+      code,
+    )) as { length: number }[];
+    console.log(findProduct);
+
+    if (findProduct.length === 0) {
+      throw new NotFoundException('Product not found');
+    }
+
+    return await queryDB(
+      `UPDATE products SET deleted_at = NOW() WHERE code = ?`,
+      code,
+    );
+  }
 }
