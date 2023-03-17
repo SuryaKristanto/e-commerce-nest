@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { pool } from '../db';
 import { ProductListDto } from './dto';
+import { CreateProductDto } from './dto/create-product';
 
 async function queryDB(query, param) {
   return new Promise((resolve) => {
@@ -47,5 +48,12 @@ export class ProductService {
       prevPage: Math.max(1, dto.page - 1),
       totalPage: Math.ceil(count.length / dto.limit),
     };
+  }
+
+  async createProduct(dto: CreateProductDto): Promise<any> {
+    return await queryDB(
+      `INSERT INTO products (code, name, price, weight, qty, updated_at, created_at) VALUES (DEFAULT,?,?,?,?,DEFAULT,DEFAULT)`,
+      [dto.name, dto.price, dto.weight, dto.qty],
+    );
   }
 }
