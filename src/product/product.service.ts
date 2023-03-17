@@ -90,4 +90,17 @@ export class ProductService {
       [dto.name, dto.price, dto.weight, dto.qty, code],
     );
   }
+
+  async productDetail(name: string): Promise<any> {
+    const product = (await queryDB(
+      `SELECT name, price, weight, qty FROM products WHERE name = ? AND deleted_at IS NULL`,
+      name,
+    )) as { length: number };
+
+    if (product.length === 0) {
+      throw new NotFoundException('Product not found');
+    }
+
+    return product;
+  }
 }

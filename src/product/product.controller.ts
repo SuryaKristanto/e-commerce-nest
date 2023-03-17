@@ -69,4 +69,15 @@ export class ProductController {
       message: 'Success update product',
     });
   }
+
+  @Get(':name')
+  async productDetail(
+    @Param('name') name: string,
+    @Res() res: Response,
+  ): Promise<any> {
+    res.status(200).json({
+      message: 'Product Detail',
+      data: await this.productService.productDetail(name),
+    });
+  }
 }
