@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { pool } from '../db';
 import { ProductListDto } from './dto';
 import { CreateProductDto } from './dto/create-product';
+import { UpdateProductDto } from './dto/update-product';
 
 async function queryDB(query, param) {
   return new Promise((resolve) => {
@@ -62,7 +63,7 @@ export class ProductService {
       `SELECT name FROM products WHERE code = ? AND deleted_at IS NULL`,
       code,
     )) as { length: number }[];
-    console.log(findProduct);
+    // console.log(findProduct);
 
     if (findProduct.length === 0) {
       throw new NotFoundException('Product not found');
@@ -71,6 +72,22 @@ export class ProductService {
     return await queryDB(
       `UPDATE products SET deleted_at = NOW() WHERE code = ?`,
       code,
+    );
+  }
+
+  async updateProduct(code: number, dto: UpdateProductDto): Promise<any> {
+    const product = (await queryDB(
+      `SELECT code FROM products WHERE code = ? AND deleted_at IS NULL`,
+      code,
+    )) as { length: number }[];
+
+    if (product.length === 0) {
+      throw new NotFoundException('Product not found');
+    }
+
+    return await queryDB(
+      `UPDATE products SET name = COALESCE(?, name), price = COALESCE(?, price), weight = COALESCE(?, weight), qty = COALESCE(?, qty) WHERE code = ?`,
+      [dto.name, dto.price, dto.weight, dto.qty, code],
     );
   }
 }
