@@ -6,9 +6,10 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Res,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { query, Response } from 'express';
 import { ProductListDto } from './dto';
 import { CreateProductDto } from './dto/create-product';
 import { UpdateProductDto } from './dto/update-product';
@@ -79,5 +80,10 @@ export class ProductController {
       message: 'Product Detail',
       data: await this.productService.productDetail(name),
     });
+  }
+
+  @Post('search')
+  async searchProduct(@Query('name') query: string): Promise<any> {
+    return this.productService.searchProduct(query);
   }
 }

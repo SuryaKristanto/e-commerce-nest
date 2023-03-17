@@ -103,4 +103,26 @@ export class ProductService {
 
     return product;
   }
+
+  async searchProduct(query: string): Promise<any> {
+    const product = (await queryDB(
+      `SELECT name, price FROM products WHERE deleted_at IS NULL`,
+      null,
+    )) as { length: number }[];
+
+    // eslint-disable-next-line prefer-const
+    let productData = [];
+    for (let i = 0; i < product.length; i++) {
+      productData[i] = {};
+      productData[i] = product[i];
+    }
+
+    const filteredProducts = productData.filter((product) => {
+      const nameMatches = product.name
+        .toLowerCase()
+        .includes(query.toLowerCase());
+      return nameMatches;
+    });
+    return filteredProducts;
+  }
 }
