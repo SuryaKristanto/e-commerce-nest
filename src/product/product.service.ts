@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { pool } from '../db';
 import { ProductListDto } from './dto';
 
@@ -18,21 +18,34 @@ async function queryDB(query, param) {
 @Injectable()
 export class ProductService {
   async productList(dto: ProductListDto): Promise<any> {
-    const { page, limit } = dto;
-
     // Calculate the offset
-    const offset = (page - 1) * limit;
+    const offset = (dto.page - 1) * dto.limit;
 
-    return await queryDB(
+    const products = (await queryDB(
       `SELECT name, price FROM products WHERE deleted_at IS NULL LIMIT ? OFFSET ?`,
-      [limit, offset],
-    );
+      [dto.limit, offset],
+    )) as { length: number }[];
+
+    if (products.length === 0) {
+      // kalo ngga ada data, maka return status
+      throw new NotFoundException('Product not found');
+    } else {
+      return products;
+    }
   }
 
-  async count(): Promise<any> {
-    return await queryDB(
+  async count(dto: ProductListDto): Promise<any> {
+    const count = (await queryDB(
       `SELECT name FROM products WHERE deleted_at IS NULL`,
       null,
-    );
+    )) as { length: number }[];
+
+    return {
+      totalFindings: count.length,
+      currentPage: dto.page,
+      nextPage: Math.min(Math.ceil(count.length / dto.limit), dto.page + 1),
+      prevPage: Math.max(1, dto.page - 1),
+      totalPage: Math.ceil(count.length / dto.limit),
+    };
   }
 }
