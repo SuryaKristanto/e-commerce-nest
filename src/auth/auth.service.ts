@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { pool } from '../db';
+import { connection } from '../db';
 import { LoginDto, RegisterDto } from './dto';
 import { createHmac } from 'crypto';
 import * as dotenv from 'dotenv';
@@ -14,7 +14,7 @@ dotenv.config();
 
 async function queryDB(query, param) {
   return new Promise((resolve) => {
-    pool.query(query, param, function (err, result, fields) {
+    connection.query(query, param, function (err, result, fields) {
       if (err) {
         //resolve('err : ' + err.stack);
         resolve('err :' + err.message);

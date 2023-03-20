@@ -8,8 +8,12 @@ import {
   Post,
   Query,
   Res,
+  UseGuards,
 } from '@nestjs/common';
-import { query, Response } from 'express';
+import { Response } from 'express';
+import { Roles } from '../auth/decorator';
+import { JwtGuard } from '../auth/guard';
+import { RolesGuard } from '../auth/guard/roles.guard';
 import { ProductListDto } from './dto';
 import { CreateProductDto } from './dto/create-product';
 import { UpdateProductDto } from './dto/update-product';
@@ -31,7 +35,9 @@ export class ProductController {
     });
   }
 
+  @UseGuards(JwtGuard, RolesGuard)
   @Post('create')
+  @Roles('admin')
   async createProduct(
     @Body() dto: CreateProductDto,
     @Res() res: Response,
@@ -48,7 +54,9 @@ export class ProductController {
     });
   }
 
+  @UseGuards(JwtGuard, RolesGuard)
   @Delete('/delete/:code')
+  @Roles('admin')
   async deleteProduct(
     @Param('code') code: number,
     @Res() res: Response,
@@ -59,7 +67,9 @@ export class ProductController {
     });
   }
 
+  @UseGuards(JwtGuard, RolesGuard)
   @Patch('/update/:code')
+  @Roles('admin')
   async updateProduct(
     @Body() dto: UpdateProductDto,
     @Param('code') code: number,

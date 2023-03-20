@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { pool } from '../db';
+import { connection } from '../db';
 import { ProductListDto } from './dto';
 import { CreateProductDto } from './dto/create-product';
 import { UpdateProductDto } from './dto/update-product';
 
 async function queryDB(query, param) {
   return new Promise((resolve) => {
-    pool.query(query, param, function (err, result, fields) {
+    connection.query(query, param, function (err, result, fields) {
       if (err) {
         //resolve('err : ' + err.stack);
         resolve('err :' + err.message);
