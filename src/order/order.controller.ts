@@ -1,4 +1,12 @@
-import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { Request, Response } from 'express';
 import { Roles } from '../auth/decorator';
 import { JwtGuard } from '../auth/guard';
@@ -7,12 +15,12 @@ import { CreateOrderDto } from './dto';
 import { OrderService } from './order.service';
 
 @Controller('order')
+@UseGuards(JwtGuard, RolesGuard)
+@Roles('admin', 'member')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
-  @UseGuards(JwtGuard, RolesGuard)
   @Post()
-  @Roles('admin', 'member')
   async createOrder(
     @Body() dto: CreateOrderDto,
     @Req() req: Request,
@@ -21,6 +29,14 @@ export class OrderController {
     await this.orderService.createOrder(dto, req.user.user_id);
     res.status(201).json({
       message: 'Success create order',
+    });
+  }
+
+  @Get('list')
+  async orderList(@Req() req: Request, @Res() res: Response): Promise<any> {
+    res.status(200).json({
+      message: 'Order List',
+      data: await this.orderService.orderList(req.user.user_id),
     });
   }
 }
