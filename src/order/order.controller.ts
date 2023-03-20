@@ -3,11 +3,12 @@ import {
   Controller,
   Get,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { query, Request, Response } from 'express';
 import { Roles } from '../auth/decorator';
 import { JwtGuard } from '../auth/guard';
 import { RolesGuard } from '../auth/guard/roles.guard';
@@ -38,5 +39,10 @@ export class OrderController {
       message: 'Order List',
       data: await this.orderService.orderList(req.user.user_id),
     });
+  }
+
+  @Get('status')
+  async statusOrder(@Query('id') query: string): Promise<any> {
+    return this.orderService.orderStatus(query);
   }
 }

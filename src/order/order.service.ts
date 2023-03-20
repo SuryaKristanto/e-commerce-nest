@@ -153,4 +153,18 @@ export class OrderService {
     // console.log(order_products);
     return order_products;
   }
+
+  async orderStatus(query: string): Promise<any> {
+    const existOrder = (await queryDB(
+      `SELECT status FROM orders WHERE id = ? AND deleted_at IS NULL`,
+      query,
+    )) as { length: number }[];
+    console.log(existOrder);
+
+    if (existOrder.length === 0) {
+      throw new NotFoundException('Order not found');
+    }
+
+    return existOrder[0];
+  }
 }
