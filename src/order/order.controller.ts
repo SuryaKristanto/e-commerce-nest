@@ -45,4 +45,12 @@ export class OrderController {
   async statusOrder(@Query('id') query: string): Promise<any> {
     return this.orderService.orderStatus(query);
   }
+
+  @Get('history')
+  async orderHistory(@Req() req: Request, @Res() res: Response): Promise<any> {
+    res.status(200).json({
+      message: 'Order History',
+      data: await this.orderService.orderHistory(req.user.user_id),
+    });
+  }
 }
