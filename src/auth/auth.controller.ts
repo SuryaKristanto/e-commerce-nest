@@ -1,14 +1,12 @@
-import {
-  Body,
-  Controller,
-  HttpException,
-  HttpStatus,
-  Post,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Post, Query, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto } from './dto';
+import {
+  ForgotPasswordDto,
+  LoginDto,
+  RegisterDto,
+  ResetPasswordDto,
+} from './dto';
 
 @Controller('auth')
 export class AuthController {
@@ -33,6 +31,25 @@ export class AuthController {
     res.status(200).json({
       message: 'login succesful',
       token: await this.authService.login(dto),
+    });
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<any> {
+    await this.authService.forgotPassword(dto);
+    return 'Email sent. Please check your email to reset your password.';
+  }
+
+  @Post('reset-password')
+  async resetPassword(
+    @Query('email') email: string,
+    @Query('token') token: string,
+    @Body() dto: ResetPasswordDto,
+    @Res() res: Response,
+  ): Promise<any> {
+    await this.authService.resetPassword(email, token, dto);
+    res.status(200).json({
+      message: 'Password reset successful',
     });
   }
 }

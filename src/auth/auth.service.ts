@@ -1,14 +1,24 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
+  GoneException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { connection } from '../db';
-import { LoginDto, RegisterDto } from './dto';
-import { createHmac } from 'crypto';
+import {
+  ForgotPasswordDto,
+  LoginDto,
+  RegisterDto,
+  ResetPasswordDto,
+} from './dto';
+import { createHmac, randomBytes } from 'crypto';
 import * as dotenv from 'dotenv';
 import { JwtService } from '@nestjs/jwt';
+import * as moment from 'moment';
+import { transporter } from './util/nodemailer';
 
 dotenv.config();
 
@@ -120,5 +130,98 @@ export class AuthService {
         expiresIn: process.env.JWT_EXPIRES_IN,
       },
     );
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto): Promise<any> {
+    const subject = 'Reset Your Password';
+
+    const isUserExist = (await queryDB(
+      `SELECT email FROM  users WHERE email = ?`,
+      dto.email,
+    )) as { length: number }[];
+    console.log(isUserExist);
+
+    // cek apakah ada user yang memiliki email yang sudah di register
+    // if user doesn't exist, send error message
+    if (isUserExist.length === 0) {
+      throw new NotFoundException('Email not found');
+    }
+
+    const resetToken = randomBytes(16).toString('hex');
+    const token = resetToken;
+    const tokenExpired = moment().add(1, 'hour').format('YYYY-MM-DD HH:mm:ss');
+
+    const user = await queryDB(
+      `UPDATE users SET reset_token = ?, token_expired_at = ? WHERE email = ?`,
+      [token, tokenExpired, dto.email],
+    );
+    console.log(user);
+
+    const mailOptions = {
+      from: process.env.NODEMAILER_USER,
+      to: dto.email,
+      subject: subject,
+      html: `Please click this link to reset your password: <a href="http://localhost:8080/reset-password?email=${dto.email}&token=${token}">Reset Password</a>`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+        throw new BadRequestException('Error: Something went wrong.');
+      } else {
+        console.log('Email sent: ' + info.response);
+      }
+    });
+  }
+
+  async resetPassword(
+    email: string,
+    token: string,
+    dto: ResetPasswordDto,
+  ): Promise<any> {
+    const encryptedOld = createHmac('sha256', process.env.SECRET)
+      .update(dto.old_password)
+      .digest('hex');
+    // console.log(encrypted);
+
+    const encryptedNew = createHmac('sha256', process.env.SECRET)
+      .update(dto.new_password)
+      .digest('hex');
+    // console.log(encrypted);
+
+    const reset = await queryDB(
+      `SELECT password, reset_token, token_expired_at FROM users WHERE email = ?`,
+      email,
+    );
+    console.log(reset);
+
+    const formatted = moment(reset[0].token_expired_at).format(
+      'YYYY-MM-DD HH:mm:ss',
+    );
+    // console.log(formatted);
+
+    if (token == reset[0].reset_token) {
+      if (formatted > moment().format('YYYY-MM-DD HH:mm:ss')) {
+        if (reset[0].password == encryptedOld) {
+          if (dto.confirm_new_password == dto.new_password) {
+            const newPassword = await queryDB(
+              `UPDATE users SET password = ? WHERE email = ?`,
+              [encryptedNew, email],
+            );
+            console.log(newPassword);
+          } else {
+            throw new UnauthorizedException(
+              'Incorrect new password confirmation',
+            );
+          }
+        } else {
+          throw new UnauthorizedException('Incorrect old password');
+        }
+      } else {
+        throw new GoneException('Expired link');
+      }
+    } else {
+      throw new ForbiddenException('Incorrect reset token');
+    }
   }
 }
