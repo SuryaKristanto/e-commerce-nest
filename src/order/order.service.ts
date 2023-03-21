@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { connection } from '../db';
-import { CreateOrderDto } from './dto';
+import { CreateOrderDto, PaymentDto } from './dto';
 
 async function queryDB(query, param) {
   return new Promise((resolve) => {
@@ -221,5 +225,27 @@ export class OrderService {
     }
     // console.log(order_products);
     return order_products;
+  }
+
+  async orderpayment(
+    user_id: string,
+    order_no: string,
+    dto: PaymentDto,
+  ): Promise<any> {
+    const order = await queryDB(
+      `SELECT total_price FROM orders WHERE user_id = ? AND order_no = ?`,
+      [user_id, order_no],
+    );
+    console.log(order);
+
+    if (order[0].total_price === dto.payment_amount) {
+      const payment = await queryDB(
+        `UPDATE orders SET status = 'PROCESSING' WHERE user_id = ? AND order_no = ?`,
+        [user_id, order_no],
+      );
+      console.log(payment);
+    } else {
+      throw new BadRequestException('Payment failed');
+    }
   }
 }

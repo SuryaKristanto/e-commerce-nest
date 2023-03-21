@@ -8,11 +8,11 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { query, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { Roles } from '../auth/decorator';
 import { JwtGuard } from '../auth/guard';
 import { RolesGuard } from '../auth/guard/roles.guard';
-import { CreateOrderDto } from './dto';
+import { CreateOrderDto, PaymentDto } from './dto';
 import { OrderService } from './order.service';
 
 @Controller('order')
@@ -51,6 +51,19 @@ export class OrderController {
     res.status(200).json({
       message: 'Order History',
       data: await this.orderService.orderHistory(req.user.user_id),
+    });
+  }
+
+  @Post('payment')
+  async orderPayment(
+    @Query('user_id') user_id: string,
+    @Query('order_no') order_no: string,
+    @Body() dto: PaymentDto,
+    @Res() res: Response,
+  ): Promise<any> {
+    await this.orderService.orderpayment(user_id, order_no, dto);
+    res.status(200).json({
+      message: 'Payment successful',
     });
   }
 }
