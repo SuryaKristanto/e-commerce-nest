@@ -14,11 +14,10 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() dto: RegisterDto, @Res() res: Response): Promise<any> {
-    const register = await this.authService.register(dto);
-    console.log(register);
+    await this.authService.register(dto);
 
     res.status(201).json({
-      message: 'success create user',
+      message: 'Success create user',
       data: {
         name: dto.name,
         email: dto.email,
@@ -29,7 +28,7 @@ export class AuthController {
   @Post('login')
   async login(@Body() dto: LoginDto, @Res() res: Response): Promise<any> {
     res.status(200).json({
-      message: 'login succesful',
+      message: 'Login succesful',
       token: await this.authService.login(dto),
     });
   }

@@ -39,11 +39,12 @@ async function queryDB(query, param) {
 export class AuthService {
   constructor(private jwt: JwtService) {}
 
-  async register(dto: RegisterDto): Promise<any> {
+  async register(dto: RegisterDto): Promise<void> {
     const isRoleExist = (await queryDB(
       `SELECT id FROM roles WHERE id = ?`,
       dto.role_id,
     )) as { length: number }[];
+    console.log(`isRoleExist: ${isRoleExist}`);
 
     // cek apakah role_id nya ada atau tidak
     if (isRoleExist.length === 0) {
@@ -54,6 +55,7 @@ export class AuthService {
       `SELECT email FROM  users WHERE email = ?`,
       dto.email,
     )) as { length: number }[];
+    console.log(`isUserExist: ${isUserExist}`);
 
     // cek apakah ada user yang memiliki email yang sudah di register
     // if user exist, send error message
@@ -65,6 +67,7 @@ export class AuthService {
       `SELECT phone FROM  users WHERE phone = ?`,
       dto.phone,
     )) as { length: number }[];
+    console.log(`isPhoneExist: ${isPhoneExist}`);
 
     // cek apakah ada user yang memiliki phone yang sudah di register
     // if user exist, send error message
@@ -79,18 +82,20 @@ export class AuthService {
       .digest('hex');
     // console.log(encrypted);
 
-    return await queryDB(
+    const user = await queryDB(
       `INSERT INTO users (id,role_id,email,password,name,address,phone,updated_at,created_at) VALUES (DEFAULT,?,?,?,?,?,?,DEFAULT,DEFAULT)`,
       [dto.role_id, dto.email, encrypted, dto.name, dto.address, dto.phone],
     );
+    console.log(`user: ${user}`);
   }
 
-  async login(dto: LoginDto): Promise<any> {
+  async login(dto: LoginDto): Promise<string> {
     // cek email tersebut ada ngga di db
     const user = (await queryDB(
       `SELECT email, password FROM users WHERE email = ?`,
       dto.email,
     )) as { length: number; password: string }[];
+    console.log(`user: ${user}`);
 
     // kalo gaada email, throw error user not found
     if (user.length === 0) {
@@ -107,7 +112,7 @@ export class AuthService {
     return this.signToken(dto);
   }
 
-  async signToken(dto: LoginDto): Promise<any> {
+  async signToken(dto: LoginDto): Promise<string> {
     const user = await queryDB(
       `SELECT id, role_id FROM users WHERE email = ?`,
       dto.email,
@@ -132,14 +137,14 @@ export class AuthService {
     );
   }
 
-  async forgotPassword(dto: ForgotPasswordDto): Promise<any> {
+  async forgotPassword(dto: ForgotPasswordDto): Promise<void> {
     const subject = 'Reset Your Password';
 
     const isUserExist = (await queryDB(
       `SELECT email FROM  users WHERE email = ?`,
       dto.email,
     )) as { length: number }[];
-    console.log(isUserExist);
+    console.log(`isUserExist: ${isUserExist}`);
 
     // cek apakah ada user yang memiliki email yang sudah di register
     // if user doesn't exist, send error message
@@ -155,7 +160,7 @@ export class AuthService {
       `UPDATE users SET reset_token = ?, token_expired_at = ? WHERE email = ?`,
       [token, tokenExpired, dto.email],
     );
-    console.log(user);
+    console.log(`user: ${user}`);
 
     const mailOptions = {
       from: process.env.NODEMAILER_USER,
