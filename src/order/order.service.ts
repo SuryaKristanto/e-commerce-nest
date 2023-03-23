@@ -21,7 +21,7 @@ async function queryDB(query, param) {
 
 @Injectable()
 export class OrderService {
-  async createOrder(dto: CreateOrderDto, user_id: number): Promise<any> {
+  async createOrder(dto: CreateOrderDto, user_id: number): Promise<void> {
     const productCode = dto.products.map((product) => {
       return product.code;
     });
@@ -34,7 +34,7 @@ export class OrderService {
       `SELECT * FROM products WHERE code IN (${placeholders}) AND deleted_at IS NULL`,
       productCode,
     )) as { length: number; code: number; qty: number; price: number }[];
-    console.log(existProducts);
+    console.log(`existProducts: ${existProducts}`);
 
     if (existProducts.length !== dto.products.length) {
       throw new NotFoundException('Product not found');
@@ -49,7 +49,7 @@ export class OrderService {
         `INSERT INTO orders (id, user_id, order_no, status, payment_method, updated_at, created_at) VALUES (DEFAULT,?,?,DEFAULT,?,DEFAULT,DEFAULT)`,
         [user_id, order_no, dto.payment_method],
       )) as { insertId: number };
-      console.log(order);
+      console.log(`order: ${order}`);
 
       const totalPrice = [];
       await Promise.all(
@@ -67,14 +67,14 @@ export class OrderService {
             `UPDATE products SET qty = ? WHERE code = ? AND qty = ?`,
             [deductQty, product.code, product.qty],
           );
-          console.log(update);
+          console.log(`update: ${update}`);
 
           // create order_products
           const orderProducts = await queryDB(
             `INSERT INTO order_products (id, product_code, order_id, qty_order, updated_at, created_at) VALUES (DEFAULT,?,?,?,DEFAULT,DEFAULT)`,
             [product.code, order.insertId, selectedPayload.qty],
           );
-          console.log(orderProducts);
+          console.log(`orderProducts: ${orderProducts}`);
 
           const totalPerProduct = selectedPayload.qty * product.price;
           // console.log(totalPerProduct);
@@ -93,7 +93,7 @@ export class OrderService {
         `UPDATE orders SET total_price = ? WHERE order_no = ?`,
         [sum, order_no],
       );
-      console.log(updateTotalPrice);
+      console.log(`updateTotalPrice: ${updateTotalPrice}`);
 
       await connection.commit();
       console.log('Transaction committed successfully');
@@ -103,12 +103,12 @@ export class OrderService {
     }
   }
 
-  async orderList(user_id: number): Promise<any> {
+  async orderList(user_id: number): Promise<object[]> {
     const userId = await queryDB(
       `SELECT id FROM users WHERE id = ? AND deleted_at IS NULL`,
       user_id,
     );
-    console.log(userId);
+    console.log(`userId: ${userId}`);
 
     const orders = (await queryDB(
       `SELECT orders.order_no, orders.status, orders.total_price, order_products.product_code AS "product_code", order_products.qty_order AS "qty_order", products.name AS "name", products.price AS "price" FROM orders LEFT JOIN order_products ON orders.id = order_products.order_id LEFT JOIN products ON order_products.product_code = products.code AND (products.deleted_at IS NULL) WHERE orders.deleted_at IS NULL AND orders.user_id = ? AND status <> 'FINISHED' ORDER BY orders.created_at DESC`,
@@ -123,7 +123,7 @@ export class OrderService {
       status: string;
       total_price: number;
     }[];
-    console.log(orders);
+    console.log(`orders: ${orders}`);
 
     const order_products = [];
     for (let i = 0; i < orders.length; i++) {
@@ -158,12 +158,12 @@ export class OrderService {
     return order_products;
   }
 
-  async orderStatus(query: string): Promise<any> {
+  async orderStatus(query: string): Promise<object> {
     const existOrder = (await queryDB(
       `SELECT status FROM orders WHERE id = ? AND deleted_at IS NULL`,
       query,
     )) as { length: number }[];
-    console.log(existOrder);
+    console.log(`existOrder: ${existOrder}`);
 
     if (existOrder.length === 0) {
       throw new NotFoundException('Order not found');
@@ -172,12 +172,12 @@ export class OrderService {
     return existOrder[0];
   }
 
-  async orderHistory(user_id: number): Promise<any> {
+  async orderHistory(user_id: number): Promise<object[]> {
     const userId = await queryDB(
       `SELECT id FROM users WHERE id = ? AND deleted_at IS NULL`,
       user_id,
     );
-    console.log(userId);
+    console.log(`userId: ${userId}`);
 
     const orders = (await queryDB(
       `SELECT orders.order_no, orders.status, orders.total_price, order_products.product_code AS "product_code", order_products.qty_order AS "qty_order", products.name AS "name", products.price AS "price" FROM orders LEFT JOIN order_products ON orders.id = order_products.order_id LEFT JOIN products ON order_products.product_code = products.code AND (products.deleted_at IS NULL) WHERE orders.deleted_at IS NULL AND orders.user_id = ? AND status = 'FINISHED' ORDER BY orders.created_at DESC`,
@@ -192,7 +192,7 @@ export class OrderService {
       status: string;
       total_price: number;
     }[];
-    console.log(orders);
+    console.log(`orders: ${orders}`);
 
     const order_products = [];
     for (let i = 0; i < orders.length; i++) {
@@ -231,19 +231,19 @@ export class OrderService {
     user_id: string,
     order_no: string,
     dto: PaymentDto,
-  ): Promise<any> {
+  ): Promise<void> {
     const order = await queryDB(
       `SELECT total_price FROM orders WHERE user_id = ? AND order_no = ?`,
       [user_id, order_no],
     );
-    console.log(order);
+    console.log(`order: ${order}`);
 
     if (order[0].total_price === dto.payment_amount) {
       const payment = await queryDB(
         `UPDATE orders SET status = 'PROCESSING' WHERE user_id = ? AND order_no = ?`,
         [user_id, order_no],
       );
-      console.log(payment);
+      console.log(`payment: ${payment}`);
     } else {
       throw new BadRequestException('Payment failed');
     }

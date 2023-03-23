@@ -66,7 +66,7 @@ export class ProductService {
       `SELECT name FROM products WHERE code = ? AND deleted_at IS NULL`,
       code,
     )) as { length: number }[];
-    // console.log(findProduct);
+    console.log(`findProduct: ${findProduct}`);
 
     if (findProduct.length === 0) {
       throw new NotFoundException('Product not found');
