@@ -16,20 +16,20 @@ async function queryDB(query, param) {
 }
 @Injectable()
 export class WishlistService {
-  async addWishlist(user_id: number, dto: AddRemoveWishlistDto): Promise<any> {
+  async addWishlist(user_id: number, dto: AddRemoveWishlistDto): Promise<void> {
     const wishlist = await queryDB(
       `INSERT INTO wishlist (id, user_id, product_code, created_at) VALUES (DEFAULT,?,?,DEFAULT)`,
       [user_id, dto.product_code],
     );
-    console.log(wishlist);
+    console.log(`wishlist: ${wishlist}`);
   }
 
-  async getWishlist(user_id: number): Promise<any> {
+  async getWishlist(user_id: number): Promise<unknown> {
     const product = (await queryDB(
       `SELECT product_code FROM wishlist WHERE user_id = ? ORDER BY created_at DESC`,
       user_id,
     )) as { length: number; product_code: number }[];
-    console.log(product);
+    console.log(`product: ${product}`);
 
     // eslint-disable-next-line prefer-const
     let productCode = [];
@@ -45,18 +45,18 @@ export class WishlistService {
       `SELECT products.name, products.price FROM wishlist LEFT JOIN products ON wishlist.product_code = products.code WHERE code IN (${placeholders}) AND wishlist.user_id = ? AND deleted_at IS NULL ORDER BY wishlist.created_at DESC`,
       [productCode, user_id],
     );
-    console.log(list);
+    console.log(`list: ${list}`);
     return list;
   }
 
   async removeWishlist(
     user_id: number,
     dto: AddRemoveWishlistDto,
-  ): Promise<any> {
+  ): Promise<void> {
     const remove = await queryDB(
       `DELETE FROM wishlist WHERE user_id = ? AND product_code = ?`,
       [user_id, dto.product_code],
     );
-    console.log(remove);
+    console.log(`remove: ${remove}`);
   }
 }
