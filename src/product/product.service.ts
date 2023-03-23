@@ -19,7 +19,7 @@ async function queryDB(query, param) {
 
 @Injectable()
 export class ProductService {
-  async productList(dto: ProductListDto): Promise<any> {
+  async productList(dto: ProductListDto): Promise<object> {
     // Calculate the offset
     const offset = (dto.page - 1) * dto.limit;
 
@@ -27,6 +27,7 @@ export class ProductService {
       `SELECT name, price FROM products WHERE deleted_at IS NULL LIMIT ? OFFSET ?`,
       [dto.limit, offset],
     )) as { length: number }[];
+    console.log(`products: ${products}`);
 
     if (products.length === 0) {
       // kalo ngga ada data, maka return status
@@ -36,11 +37,12 @@ export class ProductService {
     }
   }
 
-  async count(dto: ProductListDto): Promise<any> {
+  async count(dto: ProductListDto): Promise<object> {
     const count = (await queryDB(
       `SELECT name FROM products WHERE deleted_at IS NULL`,
       null,
     )) as { length: number }[];
+    console.log(`count: ${count}`);
 
     return {
       totalFindings: count.length,
@@ -51,14 +53,15 @@ export class ProductService {
     };
   }
 
-  async createProduct(dto: CreateProductDto): Promise<any> {
-    return await queryDB(
+  async createProduct(dto: CreateProductDto): Promise<void> {
+    const product = await queryDB(
       `INSERT INTO products (code, name, price, weight, qty, updated_at, created_at) VALUES (DEFAULT,?,?,?,?,DEFAULT,DEFAULT)`,
       [dto.name, dto.price, dto.weight, dto.qty],
     );
+    console.log(`product: ${product}`);
   }
 
-  async deleteProduct(code: number): Promise<any> {
+  async deleteProduct(code: number): Promise<void> {
     const findProduct = (await queryDB(
       `SELECT name FROM products WHERE code = ? AND deleted_at IS NULL`,
       code,
@@ -69,13 +72,14 @@ export class ProductService {
       throw new NotFoundException('Product not found');
     }
 
-    return await queryDB(
+    const softDelete = await queryDB(
       `UPDATE products SET deleted_at = NOW() WHERE code = ?`,
       code,
     );
+    console.log(`softDelete: ${softDelete}`);
   }
 
-  async updateProduct(code: number, dto: UpdateProductDto): Promise<any> {
+  async updateProduct(code: number, dto: UpdateProductDto): Promise<void> {
     const product = (await queryDB(
       `SELECT code FROM products WHERE code = ? AND deleted_at IS NULL`,
       code,
@@ -85,17 +89,19 @@ export class ProductService {
       throw new NotFoundException('Product not found');
     }
 
-    return await queryDB(
+    const update = await queryDB(
       `UPDATE products SET name = COALESCE(?, name), price = COALESCE(?, price), weight = COALESCE(?, weight), qty = COALESCE(?, qty) WHERE code = ?`,
       [dto.name, dto.price, dto.weight, dto.qty, code],
     );
+    console.log(`update: ${update}`);
   }
 
-  async productDetail(name: string): Promise<any> {
+  async productDetail(name: string): Promise<object> {
     const product = (await queryDB(
       `SELECT name, price, weight, qty FROM products WHERE name = ? AND deleted_at IS NULL`,
       name,
     )) as { length: number };
+    console.log(`product: ${product}`);
 
     if (product.length === 0) {
       throw new NotFoundException('Product not found');
@@ -104,11 +110,12 @@ export class ProductService {
     return product;
   }
 
-  async searchProduct(query: string): Promise<any> {
+  async searchProduct(query: string): Promise<object[]> {
     const product = (await queryDB(
       `SELECT name, price FROM products WHERE deleted_at IS NULL`,
       null,
     )) as { length: number }[];
+    console.log(`product: ${product}`);
 
     // eslint-disable-next-line prefer-const
     let productData = [];
@@ -117,7 +124,7 @@ export class ProductService {
       productData[i] = product[i];
     }
 
-    const filteredProducts = productData.filter((product) => {
+    const filteredProducts: object[] = productData.filter((product) => {
       const nameMatches = product.name
         .toLowerCase()
         .includes(query.toLowerCase());
