@@ -43,10 +43,8 @@ export class OrderService {
     try {
       await connection.beginTransaction();
 
-      const timestamp = new Date().getTime();
-      const random = Math.floor(Math.random() * 1000);
-      const order_no = parseInt(`${timestamp}${random}`);
-      // console.log(order_no);
+      const order_no = Math.floor(Math.random() * 1000);
+      console.log(order_no);
 
       const order = (await queryDB(
         `INSERT INTO orders (id, user_id, order_no, status, payment_method, updated_at, created_at) VALUES (DEFAULT,?,?,DEFAULT,?,DEFAULT,DEFAULT)`,
