@@ -27,7 +27,8 @@ export class OrderController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<any> {
-    await this.orderService.createOrder(dto, req.user.user_id);
+    const user: any = req.user;
+    await this.orderService.createOrder(dto, user.user_id);
     res.status(201).json({
       message: 'Success create order',
     });
@@ -35,9 +36,10 @@ export class OrderController {
 
   @Get('list')
   async orderList(@Req() req: Request, @Res() res: Response): Promise<any> {
+    const user: any = req.user;
     res.status(200).json({
       message: 'Order List',
-      data: await this.orderService.orderList(req.user.user_id),
+      data: await this.orderService.orderList(user.user_id),
     });
   }
 
@@ -48,9 +50,10 @@ export class OrderController {
 
   @Get('history')
   async orderHistory(@Req() req: Request, @Res() res: Response): Promise<any> {
+    const user: any = req.user;
     res.status(200).json({
       message: 'Order History',
-      data: await this.orderService.orderHistory(req.user.user_id),
+      data: await this.orderService.orderHistory(user.user_id),
     });
   }
 

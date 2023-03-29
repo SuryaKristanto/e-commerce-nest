@@ -27,7 +27,8 @@ export class WishlistController {
     @Body() dto: AddRemoveWishlistDto,
     @Res() res: Response,
   ): Promise<any> {
-    await this.wishlistService.addWishlist(req.user.user_id, dto);
+    const user: any = req.user;
+    await this.wishlistService.addWishlist(user.user_id, dto);
     res.status(200).json({
       message: 'Added to wishlist',
     });
@@ -35,9 +36,10 @@ export class WishlistController {
 
   @Get()
   async getWishlist(@Req() req: Request, @Res() res: Response): Promise<any> {
+    const user: any = req.user;
     res.status(200).json({
       message: 'WishList',
-      data: await this.wishlistService.getWishlist(req.user.user_id),
+      data: await this.wishlistService.getWishlist(user.user_id),
     });
   }
 
@@ -47,7 +49,8 @@ export class WishlistController {
     @Body() dto: AddRemoveWishlistDto,
     @Res() res: Response,
   ): Promise<any> {
-    await this.wishlistService.removeWishlist(req.user.user_id, dto);
+    const user: any = req.user;
+    await this.wishlistService.removeWishlist(user.user_id, dto);
     res.status(200).json({
       message: 'Removed from wishlist',
     });
