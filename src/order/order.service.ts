@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { connection } from '../db';
 import { CreateOrderDto, PaymentDto } from './dto';
+import { v4 as uuidv4 } from 'uuid';
 
 async function queryDB(query, param) {
   return new Promise((resolve) => {
@@ -43,7 +44,7 @@ export class OrderService {
     try {
       await connection.beginTransaction();
 
-      const order_no = Math.floor(Math.random() * 100 + 1);
+      const order_no = uuidv4();
 
       const order = (await queryDB(
         `INSERT INTO orders (id, user_id, order_no, status, payment_method, updated_at, created_at) VALUES (DEFAULT,?,?,DEFAULT,?,DEFAULT,DEFAULT)`,
