@@ -184,12 +184,7 @@ export class AuthService {
     token: string,
     dto: ResetPasswordDto,
   ): Promise<any> {
-    const encryptedOld = createHmac('sha256', process.env.SECRET)
-      .update(dto.old_password)
-      .digest('hex');
-    // console.log(encrypted);
-
-    const encryptedNew = createHmac('sha256', process.env.SECRET)
+    const encrypted = createHmac('sha256', process.env.SECRET)
       .update(dto.new_password)
       .digest('hex');
     // console.log(encrypted);
@@ -207,20 +202,16 @@ export class AuthService {
 
     if (token == reset[0].reset_token) {
       if (formatted > moment().format('YYYY-MM-DD HH:mm:ss')) {
-        if (reset[0].password == encryptedOld) {
-          if (dto.confirm_new_password == dto.new_password) {
-            const newPassword = await queryDB(
-              `UPDATE users SET password = ? WHERE email = ?`,
-              [encryptedNew, email],
-            );
-            console.log(newPassword);
-          } else {
-            throw new UnauthorizedException(
-              'Incorrect new password confirmation',
-            );
-          }
+        if (dto.confirm_new_password == dto.new_password) {
+          const newPassword = await queryDB(
+            `UPDATE users SET password = ? WHERE email = ?`,
+            [encrypted, email],
+          );
+          console.log(newPassword);
         } else {
-          throw new UnauthorizedException('Incorrect old password');
+          throw new UnauthorizedException(
+            'Incorrect new password confirmation',
+          );
         }
       } else {
         throw new GoneException('Expired link');
